@@ -1,44 +1,20 @@
-<!doctype html>
 <html>
-<head>
-  <meta charset="utf8">
-  <title>Example Search Page</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
-  <link rel="stylesheet" href="search-ui.css">
-</head>
-<body>
-
-  <div class="container">
-    <div class="row">
-      <div class="col-md-6">
-        <div class="search-component"></div>
-      </div>
-      <div class="col-md-6">
-        <div class="search-component"></div>
-      </div>
-    </div>
-  </div>
-
-<!-- Load libraries -->
-<script src="js/underscore.min.js"></script>
-<script src="js/stemmer.min.js"></script>
-<script src="js/search.js"></script>
-<script src="js/react-with-addons.min.js"></script>
-<script src="js/search-ui.js"></script>
-
-<!-- Load search index. Must declare searchIndex variable. -->
-<!--IMPORTANT: generate this yourself. See data/README. -->
-<script src="data/search-index.js"></script>
-
-<!-- Init search and attach UI -->
+        <head>
+<script src="stemmer.min.js"></script>
+<script src="search.js"></script>
+<script src="search-index.js"></script>
+        </head>
+        <body>
+<form action="javascript:searcher">
+</form>
 <script>
   var searcher = new StaticSearch(searchIndex, {
-    titleFormat: function(s) { return s.replace(/- Coding Robots$/, ''); },
+    titleFormat: function(s) { return s.replace(/( - (Article|Indieweb) )?- von Explaino$/, ''); },
     exclude: [
       '/404.html',
       '/google7e5d29991a627bbc.html'
     ]
   });
-  StaticSearchUI('.search-component', searcher, 10);
 </script>
-</body>
+        </body>
+</html>

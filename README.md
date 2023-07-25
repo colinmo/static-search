@@ -6,3 +6,5 @@ You can try it out here: <http://www.codingrobots.com/search/>.
 Go build:
 
 [![Build Status](https://travis-ci.org/dchest/static-search.png)](https://travis-ci.org/dchest/static-search)
+
+// CM: FROM https://github.com/dchest/static-search
