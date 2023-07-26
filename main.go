@@ -12,15 +12,17 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"time"
 
-	"github.com/dchest/static-search/indexer"
+	"github.com/colinmo/static-search/v2/indexer"
 )
 
 var (
 	fDir = flag.String("d", "", "root directory with documents")
 	fOut = flag.String("o", "search-index.json", "output file")
 	fVar = flag.String("var", "", "(optional) JavaScript variable to assign index object to")
+	fX   = flag.String("x", "", "exclude regex")
 )
 
 func isHTMLExt(ext string) bool {
@@ -57,6 +59,9 @@ func main() {
 			return nil
 		}
 		if !isHTMLExt(filepath.Ext(path)) {
+			return nil
+		}
+		if regexp.MustCompile(fmt.Sprintf(`/%s/`, *fX)).Match([]byte(path)) {
 			return nil
 		}
 		f, err := os.Open(path)

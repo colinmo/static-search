@@ -6,9 +6,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/colinmo/static-search/v2/indexer/tokenizer"
 	"github.com/dchest/stemmer/porter2"
-
-	"github.com/dchest/static-search/indexer/tokenizer"
 )
 
 type Index struct {
@@ -22,6 +21,7 @@ type Index struct {
 type Document struct {
 	URL   string `json:"u"`
 	Title string `json:"t"`
+	Date  string `json:"d"`
 }
 
 func New() *Index {
@@ -45,8 +45,8 @@ func (n *Index) addWord(word string, doc, weight int) {
 	}
 }
 
-func (n *Index) newDocument(url, title string) int {
-	n.Docs = append(n.Docs, &Document{URL: url, Title: title})
+func (n *Index) newDocument(url, title, date string) int {
+	n.Docs = append(n.Docs, &Document{URL: url, Title: title, Date: date})
 	return len(n.Docs) - 1
 }
 
@@ -65,21 +65,21 @@ func (n *Index) addString(doc int, text string, wordWeight int) {
 	}
 }
 
-func (n *Index) AddText(url, title string, r io.Reader) error {
+func (n *Index) AddText(url, title, date string, r io.Reader) error {
 	var b bytes.Buffer
 	if _, err := io.Copy(&b, r); err != nil {
 		return err
 	}
-	n.addString(n.newDocument(url, title), b.String(), 1)
+	n.addString(n.newDocument(url, title, date), b.String(), 1)
 	return nil
 }
 
 func (n *Index) AddHTML(url string, r io.Reader) error {
-	title, content, err := parseHTML(r)
+	title, date, content, err := parseHTML(r)
 	if err != nil {
 		return err
 	}
-	doc := n.newDocument(url, title)
+	doc := n.newDocument(url, title, date)
 	n.addString(doc, title, n.HTMLTitleWeight)
 	n.addString(doc, content, 1)
 	// Add URL components.

@@ -11,12 +11,14 @@ import (
 
 type htmlParser struct {
 	title string
+	date  string
 	b     bytes.Buffer
 	z     *html.Tokenizer
 }
 
 func (p *htmlParser) parseMeta(n *html.Node) {
 	indexable := false
+	date := false
 	for _, a := range n.Attr {
 		if a.Key == "name" {
 			v := strings.ToLower(a.Val)
@@ -24,13 +26,25 @@ func (p *htmlParser) parseMeta(n *html.Node) {
 				indexable = true
 			}
 		}
+		if a.Key == "itemprop" {
+			v := strings.ToLower(a.Val)
+			if v == "datepublished" {
+				date = true
+			}
+		}
 	}
-	if !indexable {
-		return
+	if indexable {
+		for _, a := range n.Attr {
+			if a.Key == "content" {
+				p.consumeString(a.Val)
+			}
+		}
 	}
-	for _, a := range n.Attr {
-		if a.Key == "content" {
-			p.consumeString(a.Val)
+	if date {
+		for _, a := range n.Attr {
+			if a.Key == "content" {
+				p.date = a.Val
+			}
 		}
 	}
 }
@@ -121,11 +135,15 @@ func (p *htmlParser) Title() string {
 	return p.title
 }
 
-func parseHTML(r io.Reader) (title, content string, err error) {
+func (p *htmlParser) Date() string {
+	return p.date
+}
+
+func parseHTML(r io.Reader) (title, date, content string, err error) {
 	var p htmlParser
 	err = p.Parse(r)
 	if err != nil {
 		return
 	}
-	return p.Title(), p.Content(), nil
+	return p.Title(), p.Date(), p.Content(), nil
 }

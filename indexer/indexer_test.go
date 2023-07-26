@@ -9,14 +9,18 @@ func TestAddText(t *testing.T) {
 	n := New()
 	r := bytes.NewReader([]byte("HEY you! Try Mémoires.\nTry?"))
 	title := "Message"
+	date := "2023-01-01"
 	url := "http://www.codingrobots.com"
-	if err := n.AddText(url, title, r); err != nil {
+	if err := n.AddText(url, title, date, r); err != nil {
 		t.Fatal(err)
 	}
 	if len(n.Docs) == 0 {
 		t.Fatalf("no documents indexed")
 	}
 	if n.Docs[0].Title != title || n.Docs[0].URL != url {
+		t.Errorf("bad document: %v", n.Docs[0])
+	}
+	if n.Docs[0].Date != date {
 		t.Errorf("bad document: %v", n.Docs[0])
 	}
 	ensureIndexContains(t, n, []string{"hey", "tri", "memoir"})
@@ -29,6 +33,7 @@ const htmlTest = `<!doctype html>
   <title>Hello world</title>
   <meta name="description" content="offspring">
   <meta name="keywords" content="green day, yoohie">
+  <meta itemprop="datePublished" content="2023-07-20T21:40:41+10:00" />
 </head>
 <body>
  <div>
@@ -57,6 +62,9 @@ func TestAddHTML(t *testing.T) {
 	}
 	if n.Docs[0].URL != url {
 		t.Errorf("bad url: %q", n.Docs[0].URL)
+	}
+	if n.Docs[0].Date != "2023-07-20T21:40:41+10:00" {
+		t.Errorf("bad document: %v", n.Docs[0])
 	}
 	ensureIndexContains(t, n, []string{
 		"this",

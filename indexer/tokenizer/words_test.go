@@ -31,7 +31,7 @@ func testTokenizer(t *testing.T, makeTokenizer func(string) Tokenizer, tests []t
 			j++
 		}
 		if j < len(v.tokens) {
-			t.Errorf("%d: missed tokens: %v", v.tokens[j:])
+			t.Errorf("%d: missed tokens: %v", j, v.tokens[j:])
 		}
 	}
 }

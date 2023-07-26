@@ -1,20 +1,44 @@
 <html>
-        <head>
-<script src="stemmer.min.js"></script>
-<script src="search.js"></script>
-<script src="search-index.js"></script>
-        </head>
-        <body>
-<form action="javascript:searcher">
-</form>
-<script>
-  var searcher = new StaticSearch(searchIndex, {
-    titleFormat: function(s) { return s.replace(/( - (Article|Indieweb) )?- von Explaino$/, ''); },
-    exclude: [
-      '/404.html',
-      '/google7e5d29991a627bbc.html'
-    ]
-  });
-</script>
-        </body>
+
+<head>
+    <script src="stemmer.min.js"></script>
+    <script src="search.js"></script>
+    <script src="search-index.js"></script>
+</head>
+
+<body>
+    <form>
+        <label for="search">Search</label>
+        <input type="search" id="search" name="search" />
+        <input type="submit" name="go=" value="Let's look" />
+    </form>
+    <ul id="search-results"></ul>
+    <script>
+        document.getElementsByTagName('form')[0].addEventListener('submit', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            populateSearchResults(searcher.search(document.getElementById('search').value));
+        });
+        var searcher = new StaticSearch(searchIndex, {
+            titleFormat: function (s) { return s.replace(/( - (Article|Indieweb) )?- von Explaino$/, ''); },
+            exclude: [
+                '/404.html',
+                '/google7e5d29991a627bbc.html'
+            ]
+        });
+        function populateSearchResults(results) {
+            const targetResults = document.getElementById('search-results');
+            targetResults.innerHTML = "";
+            results.forEach((e) => {
+                let li = document.createElement('LI'),
+                    a = document.createElement('A');
+                a.setAttribute('href', e.url);
+                a.innerText = e.title;
+                li.appendChild(a);
+                targetResults.appendChild(li);
+            });
+        }
+    </script>
+</body>
+
 </html>
