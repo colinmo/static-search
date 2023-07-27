@@ -77,6 +77,7 @@ var StaticSearch = (function () {
 
         this._titleFormat = makeFormatter('title', options.titleFormat);
         this._urlFormat = makeFormatter('url', options.urlFormat);
+        this._dateFormat = makeFormatter('date', options.dateFormat);
 
         var that = this;
         this._exclude = {};
@@ -120,7 +121,6 @@ var StaticSearch = (function () {
 
         var docs = {};
         Object.entries(found).forEach(function (key) {
-        console.log(key);
             key[1].forEach(function (dc) {
                 var d = dc instanceof Number ?  dc : dc[0];
                 docs[d] = (docs[d] || 0) + 1;
@@ -143,19 +143,17 @@ var StaticSearch = (function () {
                 }
             });
         });
-        //console.log(ranksByDoc);
 
         return Object.entries(ranksByDoc)
-            .sort(function (p) { return p[1]; }) // sort by rank
-            .map(function(x){
-                return x[0]
-              }) // extract document number without rank
-            .map(function (v) { return searchIndex.docs[v]; })
-            .filter(function (v) { return !that._exclude[v.u]; })
-            .map(function (v) {
+            .filter((v) => !that._exclude[v.u]) // extract document number without rank
+            .sort((p) => -p[1]) // sort by rank
+            .map((x) => x[0])
+            .map((v) => searchIndex.docs[v])
+            .map((v) => {
                 return {
                     title: that._titleFormat(v.t),
-                    url: that._urlFormat(v.u)
+                    url: that._urlFormat(v.u),
+                    date: that._dateFormat(v.d)
                 };
             });
     };

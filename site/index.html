@@ -21,10 +21,7 @@
         });
         var searcher = new StaticSearch(searchIndex, {
             titleFormat: function (s) { return s.replace(/( - (Article|Indieweb) )?- von Explaino$/, ''); },
-            exclude: [
-                '/404.html',
-                '/google7e5d29991a627bbc.html'
-            ]
+            dateFormat: function (s) { return s.replace(/^(\d{4}-\d{2}-\d{2})/, "$1")}
         });
         function populateSearchResults(results) {
             const targetResults = document.getElementById('search-results');
@@ -33,7 +30,7 @@
                 let li = document.createElement('LI'),
                     a = document.createElement('A');
                 a.setAttribute('href', e.url);
-                a.innerText = e.title;
+                a.innerText = e.date + ": " + e.title;
                 li.appendChild(a);
                 targetResults.appendChild(li);
             });
