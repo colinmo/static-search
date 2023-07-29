@@ -146,7 +146,7 @@ var StaticSearch = (function () {
 
         return Object.entries(ranksByDoc)
             .filter((v) => !that._exclude[v.u]) // extract document number without rank
-            .sort((p) => -p[1]) // sort by rank
+            .sort((p,q) => p[1]==q[1] ? 0 : (p[1]>q[1] ? -1 : 1)) // sort by rank
             .map((x) => x[0])
             .map((v) => searchIndex.docs[v])
             .map((v) => {
