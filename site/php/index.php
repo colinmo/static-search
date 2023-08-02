@@ -4,6 +4,9 @@
  * for use in OpenSearch
  */
 
+ini_set('error_reporting',E_ALL);
+ini_set('error_log','error.log');
+
 class StaticSearch {
     private $STOP_WORDS = [];
     private $index;
@@ -19,7 +22,7 @@ class StaticSearch {
         255=> 'y'
     ];
 
-    public function __construct($index, object $options=[]) {
+    public function __construct($index, object $options=null) {
         if (!$index) {
             throw new \Exception("Please provide a search index");
         }
@@ -93,36 +96,28 @@ class StaticSearch {
 
     public function search(string $query): array {
         $queryWords = [];
-        preg_match_all("/\w{1,}/g",$this->removeAccents($query, $queryWords));
-        array_walk($queryWords, 'strtolower');
-        $lastWord = array_pop($queryWords);
+        $i = preg_match_all("/\w{1,}/",$this->removeAccents($query), $queryWords);
+        $queryWords = $queryWords[0];
+        array_walk($queryWords, function($v) { $v = strtolower($v); });
         $words = array_map('stemmer', array_filter($queryWords, function($s)  {return !$this->isStopWord($s);}));
-        $found = pick($this->index, $words);
-        if ($lastWord) {
-            $stemmedLastWord = stemmer($lastWord);
-            foreach ($this->index->words as $K=>$indexWord) {
-                if ($indexWord[0] == $lastWord[0]) {
-                    if (strpos($indexWord, $lastWord) == 0 || strpos($indexWord, $stemmedLastWord) === 0) {
-                        $found[$indexWord] = $K;
-                    }
-                }
-            }
-        }
+        $found = pick($this->index->words, $words);
+
         $docs = [];
-        foreach ($found as $key) {
+        foreach ($found as $K=>$D) {
+            $key = [$K,$D];
             foreach ($key[1] as $dc) {
                 $d = is_numeric($dc) ? $dc : $dc[0];
                 $docs[$d] = 1 + ($docs[$d]?:0);
             }
         }
-        $docs = array_map(function($p) { return +$p[0]; }, array_filter($docs, function($p) use ($words) { return $p[1] >= count($words)-1; }));
-
+        $docs = array_keys(array_filter($docs, function($p) use ($words) { return $p >= count($words)-1; }));
         $ranksByDoc = [];
-        foreach ($found as $key) {
+        foreach ($found as $K=>$D) {
+            $key = [$K,$D];
             foreach($key[1] as $dc) {
                 $d = is_numeric($dc) ? $dc : $dc[0];
                 if (in_array($d, $docs)) {
-                    $r = is_numeric($dc) ? 1 : $dc[1];
+                    $r = is_numeric($dc) ? 0 : $dc[1];
                     $ranksByDoc[$d] = ($ranksByDoc[$d] ?: 0) + $r;
                 }
             }
@@ -131,28 +126,83 @@ class StaticSearch {
         $uf = $this->urlFormat;
         $df = $this->dateFormat;
 
-        $r1 = array_filter($ranksByDoc, function($v) { return !$this->exclude[$v->u];});
-        usort($r1, function($p,$q) { return $p<=>$q; });
-        array_walk($r1, function($x) {return $x[0];});
-        array_walk($r1, function($v) { return $this->index->docs[$v];});
-        array_walk($r1, function($v) use ($tf,$uf,$df) { return ["title" => $tf($v->t), "url" => $uf($v->u), "date" => $df($v->d)];});
+        $r1 = array_filter($ranksByDoc, function($v) { return !$this->exclude[$ind->docs[$v]->u];});
+        uasort($r1, function($p,$q) { return $q<=>$p; });
+        $r1 = array_flip($r1);
+        $ind = $this->index;
+        array_walk($r1, function(&$v) use ($ind) { $v = $ind->docs[$v];});
+        array_walk($r1, function(&$v) use ($tf,$uf,$df) { $v =  ["title" => $tf($v->t), "url" => $uf($v->u), "date" => $df($v->d)];});
         return $r1;
+    }
+
+    private function getIndex(&$v) {
+        $v = $this->index->docs[$v];
     }
 }
 
 function stemmer(string $s): string {
-    return $s;
+    include_once 'vendor/autoload.php';
+    return \Nadar\Stemming\Stemm::stem($s, "en");
 }
 
 function pick($object, $keys):array{
     if (is_object($object)) {
         $toReturn = [];
-        foreach ($object as $K=>$D) {
-            if (in_array($K, $keys)) {
-                $toReturn[$K] = $D;
+        foreach ($keys as $D) {
+            if (isset($object->{$D})) {
+                $toReturn[$D] = $object->{$D};
             }
         }
         return $toReturn;
     }
     return [];
+}
+
+$bob = file_get_contents("/home/relapse/www/search-index.js");
+$bob = substr($bob, strlen("searchIndex = "));
+$bob = json_decode($bob);
+$search = new StaticSearch($bob, (object)[
+        "titleFormat" => function ($s) { return preg_replace("/( - (Article|Indieweb|Page|Reply) )?- von Explaino$/", '',$s); },
+        "dateFormat" => function ($s) { return preg_replace("/^(\d{4}-\d{2}-\d{2}).*/", "$1", $s);}]
+);
+echo searchAsFeed($_GET['query'], $search->search($_GET['query']?:"XXXXXXXXXXXXX"));
+
+function searchAsFeed(string $terms, array $results): string {
+    $qterms = urlencode($terms);
+    $hterms = str_replace('"','&quot;',htmlentities($terms));
+    $when = date("Y-m-dTH:i:sZ+1000");
+    $total = count($results);
+    $rss =<<<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">
+  <title>vonExplaino.com search: $hterms</title>
+  <link href="https://vonexplaino.com/code/search/index.php?$qterms"/>
+  <updated>$when</updated>
+  <author><name>Colin Morris / Professor von Explaino</name></author>
+  <opensearch:totalResults>$total</opensearch:totalResults>
+  <opensearch:startIndex>1</opensearch:startIndex>
+  <opensearch:itemsPerPage>$total</opensearch:itemsPerPage>
+  <opensearch:Query role="request" searchTerms="$hterms" startPage="1" />
+  <!--<link rel="alternate" href="https://vonexplaino.com/code/search/index.php?$qterms" type="text/html"/>-->
+  <link rel="self" href="https://vonexplaino.com/code/search/index.php?$qterms" type="application/atom+xml"/>
+  <!--<link rel="first" href="http://example.com/New+York+History?pw=1&amp;format=atom" type="application/atom+xml"/>
+  <link rel="previous" href="http://example.com/New+York+History?pw=2&amp;format=atom" type="application/atom+xml"/>
+  <link rel="next" href="http://example.com/New+York+History?pw=4&amp;format=atom" type="application/atom+xml"/>
+  <link rel="last" href="http://example.com/New+York+History?pw=42299&amp;format=atom" type="application/atom+xml"/>-->
+  <link rel="search" type="application/opensearchdescription+xml" href="https://vonexplaino.com/.well-known/search.xml"/>
+EOF;
+    foreach ($results as $D) {
+        $rss .= <<<EOF
+
+  <entry>
+    <title>{$D['title']}</title>
+    <link href="https://vonexplaino.com/blog/posts{$D['url']}"/>
+    <updated>{$D['date']}</updated>
+    <content type="text"></content>
+  </entry>
+
+EOF;
+    }
+    return $rss . '</feed>';
 }

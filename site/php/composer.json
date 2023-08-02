@@ -1,0 +1,5 @@
+{
+    "require": {
+        "nadar/stemming": "^1.1"
+    }
+}

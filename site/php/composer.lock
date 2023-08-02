@@ -1,0 +1,66 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "010896acba8f0df93c066299414f90d6",
+    "packages": [
+        {
+            "name": "nadar/stemming",
+            "version": "1.1.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nadar/stemming.git",
+                "reference": "e8c853ca91d55594c3b5147090616e26b6ed968c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nadar/stemming/zipball/e8c853ca91d55594c3b5147090616e26b6ed968c",
+                "reference": "e8c853ca91d55594c3b5147090616e26b6ed968c",
+                "shasum": ""
+            },
+            "require-dev": {
+                "luyadev/luya-testsuite": "^2.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Nadar\\Stemming\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Basil Suter",
+                    "homepage": "https://github.com/nadar",
+                    "role": "Creator"
+                }
+            ],
+            "description": "Stemming by Language",
+            "homepage": "https://github.com/nadar/stemming",
+            "keywords": [
+                "php",
+                "stemmer",
+                "stemming"
+            ],
+            "support": {
+                "issues": "https://github.com/nadar/stemming/issues",
+                "source": "https://github.com/nadar/stemming/tree/1.1.4"
+            },
+            "time": "2023-01-11T15:38:38+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": [],
+    "plugin-api-version": "2.2.0"
+}
